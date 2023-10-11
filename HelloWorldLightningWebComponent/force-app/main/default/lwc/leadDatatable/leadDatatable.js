@@ -1,7 +1,9 @@
 import { LightningElement, wire, track } from 'lwc';
 import { NavigationMixin } from 'lightning/navigation';
+import cLead from '@salesforce/apex/LeadDatatable.cLead';
 import getLeads from '@salesforce/apex/LeadDatatable.getLeads';
 import getLeadsCount from '@salesforce/apex/LeadDatatable.getLeadsCount';
+
 
 const columns = [
   {
@@ -30,6 +32,15 @@ export default class LeadDatatable extends NavigationMixin(LightningElement) {
   @track sortDirection;
   @track searchTerm = '';
   @track currentPage = 1;
+  @track showModal = false; // 모달
+  @track firstName = '';
+  @track lastName = '';
+  @track company = '';
+  @track title = '';
+  @track email = '';
+  @track rating = '';
+  @track status = '';
+  @track leadSource = '';
 
   @wire(getLeadsCount, { searchTerm: '$searchTerm'}) totalLeadCount;
   
@@ -47,10 +58,83 @@ export default class LeadDatatable extends NavigationMixin(LightningElement) {
     }
   }
 
+   // 등급 콤보박스 옵션
+  ratingOptions = [
+    { label: 'Hot', value: 'Hot' },
+    { label: 'Warm', value: 'Warm' },
+    { label: 'Cold', value: 'Cold' }
+  ];
+
+    // 상태 콤보박스 옵션
+    statusOptions = [
+      { label: 'Open - Not Contacted', value: 'Open - Not Contacted' },
+      { label: 'Working - Contacted', value: 'Working - Contacted' },
+      { label: 'Closed - Converted', value: 'Closed - Converted' },
+      { label: 'Closed - Not Converted', value: 'Closed - Not Converted' }
+    ];
+
+    // 리드 소스 콤보박스 옵션
+    leadSourceOptions = [
+      { label: 'Web', value: 'Web' },
+      { label: 'Phone Inquiry', value: 'Phone Inquiry' },
+      { label: 'Partner Referral', value: 'Partner Referral' },
+      { label: 'Purchased List', value: 'Purchased List' },
+      { label: 'Other', value: 'Other' }
+    ];
+
   handleSearch(event) {
     // 검색어 필드의 값을 업데이트하고 데이터를 새로고침
     this.searchTerm = event.target.value;
     this.currentPage = 1; // 검색을 하고 1페이지로 초기화를 한다.
+  }
+
+  // 콤보 박스 체인지 핸들함수
+  handleFirstNameChange(event) {this.firstName = event.detail.value;}
+  handleLastNameChange(event) {this.lastName = event.detail.value;}
+  handleCompanyChange(event) {this.company = event.detail.value;}
+  handleTitleChange(event) {this.title = event.detail.value;}
+  handleEmailChange(event) {this.email = event.detail.value;}
+  handleRatingChange(event) {this.rating = event.detail.value;}
+  handleStatusChange(event) {this.status = event.detail.value;}
+  handleLeadSourceChange(event) {this.leadSource = event.detail.value;}
+
+   // 리드 생성 로직
+  createLead() {
+    const fields = {
+        FirstName: this.firstName,
+        LastName: this.lastName,
+        Company: this.company,
+        Title: this.title,
+        Email: this.email,
+        Rating: this.rating,
+        Status: this.status,
+        LeadSource: this.leadSource
+    };
+
+    console.log("dddd"+fields.FirstName);
+
+    // Apex 메서드 호출
+    cLead({ fields: fields })
+    .then(result => {
+      if (result) {
+        // 리드가 생성되었으므로 레코드 ID를 받아옴
+        const leadId = result;
+
+        // 레코드 상세 페이지로 이동
+        this[NavigationMixin.Navigate]({
+            type: 'standard__recordPage',
+            attributes: {
+                recordId: leadId,
+                actionName: 'view'
+            }
+        });
+      }
+    })
+    .catch(error => {
+        console.error('리드 생성 중 오류 발생: ' + JSON.stringify(error));
+    });
+
+    this.closeModal();
   }
 
   doSorting(event) {
@@ -74,23 +158,29 @@ export default class LeadDatatable extends NavigationMixin(LightningElement) {
     this.data = parseData;
   }
 
-  navigateToNewLeadPage() {
-    this[NavigationMixin.Navigate]({
-      type: 'standard__objectPage',
-      attributes: {
-        objectApiName: 'Lead',
-        actionName: 'new',
-      },
-    });
-  }
-
+  // 이전 페이지 이동
   previousPage() {
     if (this.currentPage > 1) {
       this.currentPage--;
     }
   }
-
+  // 다음 페이지 이동
   nextPage() { this.currentPage++;}
+
+  // 리드생성 모달창 오픈
+  openLeadCreationModal() {this.showModal = true;}
+  // 리드생성 모달창 클로즈
+  closeModal() { 
+    this.showModal = false;
+    this.firstName = '';
+    this.lastName = '';
+    this.company = '';
+    this.title = '';
+    this.email = '';
+    this.rating = '';
+    this.status = '';
+    this.leadSource = '';
+  }
 
   get isPreviousButtonDisabled() {
     return this.currentPage === 1;

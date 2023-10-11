@@ -1,10 +1,64 @@
 <template>
   <lightning-card title="커스텀 리드 데이터테이블 과제입니다." icon-name="standard:lead">
     <div class="slds-p-left_medium" style="text-align: left;">
-      <button class="slds-button slds-button_success" style="color: blue; vertical-align: middle;" onclick={navigateToNewLeadPage}>리드 만들어유~</button>
+      <button class="slds-button slds-button_success" style="color: blue; vertical-align: middle;" onclick={openLeadCreationModal}>
+        리드 만들어유~
+      </button>
       &nbsp;&nbsp;&nbsp;
       <lightning-input type="search" label="검색" value={searchTerm} onchange={handleSearch} style="display: inline-block; width:40%;"></lightning-input>
     </div>
+
+      <!-- 모달 다이얼로그 구조 -->
+      <template if:true={showModal}>
+    <div class="slds-modal slds-fade-in-open">
+      <div class="slds-modal__container">
+          <header class="slds-modal__header">
+              <h2 class="slds-text-heading_medium">(환) 리드 생성하는 페이지 (영)</h2>
+          </header>
+          <div class="slds-modal__content slds-p-around_medium">
+
+            <lightning-input label="성" value={firstName} onchange={handleFirstNameChange}></lightning-input>
+            <lightning-input label="이름" value={lastName} onchange={handleLastNameChange} required></lightning-input>
+            <lightning-input label="회사" value={company} onchange={handleCompanyChange}></lightning-input>
+            <lightning-input label="직급" value={title} onchange={handleTitleChange}></lightning-input>
+
+            <lightning-input label="이메일" type="email" value={email} onchange={handleEmailChange} required></lightning-input>
+              <!-- 필드 추가: Rating (선택 목록) -->
+              <lightning-combobox
+                  label="등급"
+                  value={rating}
+                  options={ratingOptions}
+                  onchange={handleRatingChange}
+                  required>
+              </lightning-combobox>
+              
+              <!-- 필드 추가: Status (선택 목록) -->
+              <lightning-combobox
+                  label="리드 상태"
+                  value={status}
+                  options={statusOptions}
+                  onchange={handleStatusChange}
+                  required>
+              </lightning-combobox>
+
+              <lightning-combobox
+                  label="리드 소스"
+                  value={leadSource}
+                  options={leadSourceOptions}
+                  onchange={handleLeadSourceChange}
+                  required>
+              </lightning-combobox>
+
+          </div>
+          <footer class="slds-modal__footer">
+              <lightning-button label="닫아유" onclick={closeModal}></lightning-button>
+              <lightning-button label="진짜 만들어유" variant="brand" onclick={createLead}></lightning-button>
+          </footer>
+      </div>
+    </div>
+      <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+
     <br>
      <span style="font-size : 20px; color:red;">데이터의 총 개수 : {totalLeadCount.data}개</span>
     <div style="width: 100%; height: 70vh;">

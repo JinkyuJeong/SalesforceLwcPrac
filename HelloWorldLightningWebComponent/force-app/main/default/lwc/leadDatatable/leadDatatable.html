@@ -1,0 +1,36 @@
+<template>
+  <lightning-card title="커스텀 리드 데이터테이블 과제입니다." icon-name="standard:lead">
+    <div class="slds-p-left_medium" style="text-align: left;">
+      <button class="slds-button slds-button_success" style="color: blue; vertical-align: middle;" onclick={navigateToNewLeadPage}>리드 만들어유~</button>
+      &nbsp;&nbsp;&nbsp;
+      <lightning-input type="search" label="검색" value={searchTerm} onchange={handleSearch} style="display: inline-block; width:40%;"></lightning-input>
+    </div>
+    <br>
+     <span style="font-size : 20px; color:red;">데이터의 총 개수 : {totalLeadCount.data}개</span>
+    <div style="width: 100%; height: 70vh;">
+      <template if:true={data}>
+        <lightning-datatable data={data}
+                             columns={columns}
+                             key-field="id"
+                             sorted-by={sortBy}
+                             sorted-direction={sortDirection}
+                             onsort={doSorting}
+                             hide-checkbox-column="true"></lightning-datatable>
+      </template>
+    </div>
+
+    <div style="text-align: center; background-color: black;">
+      <lightning-button
+        label="이전"
+        onclick={previousPage}
+        disabled={isPreviousButtonDisabled}>
+      </lightning-button>
+      &nbsp;
+      <lightning-button
+        label="다음"
+        onclick={nextPage}
+        disabled={isNextButtonDisabled}>
+      </lightning-button>
+    </div>
+  </lightning-card>
+</template>

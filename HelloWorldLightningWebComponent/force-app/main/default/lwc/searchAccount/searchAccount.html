@@ -1,0 +1,29 @@
+<template>
+  <lightning-card title="Search Account" icon-name="custom:custom57">
+		<div class="slds-m-around_medium">
+			<lightning-input type="search" onchange={handleKeyChange} class="slds-m-bottom_small" label="Search"></lightning-input>
+			
+			<!-- <template if:true={accounts.data}>
+				<template for:each={accounts.data} for:item="acc">
+					<lightning-layout vertical-align="center" key={acc.id}>
+						<li>
+							{acc.Name}
+							{acc.AccountNumber}
+						</li>
+					</lightning-layout>
+				</template>
+			</template> -->
+
+			<template if:true={accounts}>
+				<template for:each={accounts} for:item="acc">
+					<lightning-layout vertical-align="center" key={acc.id}>
+						<li>
+							{acc.Name}
+							{acc.AccountNumber}
+						</li>
+					</lightning-layout>
+				</template>
+			</template>
+		</div>
+	</lightning-card>
+</template>

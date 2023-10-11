@@ -65,22 +65,22 @@ export default class LeadDatatable extends NavigationMixin(LightningElement) {
     { label: 'Cold', value: 'Cold' }
   ];
 
-    // 상태 콤보박스 옵션
-    statusOptions = [
-      { label: 'Open - Not Contacted', value: 'Open - Not Contacted' },
-      { label: 'Working - Contacted', value: 'Working - Contacted' },
-      { label: 'Closed - Converted', value: 'Closed - Converted' },
-      { label: 'Closed - Not Converted', value: 'Closed - Not Converted' }
-    ];
+  // 상태 콤보박스 옵션
+  statusOptions = [
+    { label: 'Open - Not Contacted', value: 'Open - Not Contacted' },
+    { label: 'Working - Contacted', value: 'Working - Contacted' },
+    { label: 'Closed - Converted', value: 'Closed - Converted' },
+    { label: 'Closed - Not Converted', value: 'Closed - Not Converted' }
+  ];
 
-    // 리드 소스 콤보박스 옵션
-    leadSourceOptions = [
-      { label: 'Web', value: 'Web' },
-      { label: 'Phone Inquiry', value: 'Phone Inquiry' },
-      { label: 'Partner Referral', value: 'Partner Referral' },
-      { label: 'Purchased List', value: 'Purchased List' },
-      { label: 'Other', value: 'Other' }
-    ];
+  // 리드 소스 콤보박스 옵션
+  leadSourceOptions = [
+    { label: 'Web', value: 'Web' },
+    { label: 'Phone Inquiry', value: 'Phone Inquiry' },
+    { label: 'Partner Referral', value: 'Partner Referral' },
+    { label: 'Purchased List', value: 'Purchased List' },
+    { label: 'Other', value: 'Other' }
+  ];
 
   handleSearch(event) {
     // 검색어 필드의 값을 업데이트하고 데이터를 새로고침
@@ -101,14 +101,14 @@ export default class LeadDatatable extends NavigationMixin(LightningElement) {
    // 리드 생성 로직
   createLead() {
     const fields = {
-        FirstName: this.firstName,
-        LastName: this.lastName,
-        Company: this.company,
-        Title: this.title,
-        Email: this.email,
-        Rating: this.rating,
-        Status: this.status,
-        LeadSource: this.leadSource
+      FirstName: this.firstName,
+      LastName: this.lastName,
+      Company: this.company,
+      Title: this.title,
+      Email: this.email,
+      Rating: this.rating,
+      Status: this.status,
+      LeadSource: this.leadSource
     };
 
     console.log("dddd"+fields.FirstName);
@@ -119,6 +119,7 @@ export default class LeadDatatable extends NavigationMixin(LightningElement) {
       if (result) {
         // 리드가 생성되었으므로 레코드 ID를 받아옴
         const leadId = result;
+        this.closeModal(); // 리드 생성하고 모달창 닫기
 
         // 레코드 상세 페이지로 이동
         this[NavigationMixin.Navigate]({
@@ -133,16 +134,16 @@ export default class LeadDatatable extends NavigationMixin(LightningElement) {
     .catch(error => {
         console.error('리드 생성 중 오류 발생: ' + JSON.stringify(error));
     });
-
-    this.closeModal();
   }
 
+  // 정렬을 하기위한 설정
   doSorting(event) {
     this.sortBy = event.detail.fieldName;
     this.sortDirection = event.detail.sortDirection;
     this.sortData(this.sortBy, this.sortDirection);
   }
 
+  // 정렬 함수
   sortData(fieldname, direction) {
     let parseData = JSON.parse(JSON.stringify(this.data));
     let keyValue = (a) => {

@@ -31,10 +31,17 @@ export default class LeadDatatable extends NavigationMixin(LightningElement) {
   @track data;
   @track columns = columns;
   @track sortBy;
-  @track sortDirection;
-  @track searchTerm = '';
+  @track sortDirection; // 오름차 / 내림차
+  @track searchTerm = ''; // 검색어
   @track currentPage = 1;
-  @track totalLeadCount;
+  @track pageNumbers = [];  // 페이지 번호 넣는 배열
+  @track pageSize = 10; // 페이지당 데이터 개수
+  @track isPreviousButtonDisabled = true;
+  @track isNextButtonDisabled = false;
+  @track next5PageDisabled = false;
+  @track isFirstButtonDisabled = false;
+  @track isEndButtonDisabled = false;
+  @track totalLeadCount;  // 데이터 개수
   @track showModal = false; // 모달
   @track firstName;
   @track lastName;
@@ -53,28 +60,49 @@ export default class LeadDatatable extends NavigationMixin(LightningElement) {
   @track selectedRowIds;
   @track isDeleteButtonDisabled = true; // 삭제 버튼 비활성화 상태
   @track buttonLabel = '삭제 할거면 체크해유~'; // 삭제 버튼 레이블
+  @track field = 'LastName';
+  @track selectRating ='';  // 필터링된 등급 value
+  @track selectStatus = ''; // 필터링된 상태 value
+  @track startPage;
+  @track endPage;
 
+  // DOM연결
   connectedCallback() {
     this.loadData();
   }
   
+  // 데이터 로드
   loadData(){
     this.retrieveData();
     this.retrieveTotalLeadCount();
   }
 
+  // 데이터 개수
   retrieveTotalLeadCount() {
-    getLeadsCount({ searchTerm: this.searchTerm })
+    getLeadsCount({ searchTerm: this.searchTerm,
+                    field: this.field, 
+                    selectRating : this.selectRating,
+                    selectStatus : this.selectStatus 
+      })
       .then(result => {
         this.totalLeadCount = result;
+        this.calculatePageNumbers();
       })
       .catch(error => {
         this.totalLeadCount = 0;
+        this.calculatePageNumbers();
       });
   }
 
+  // 데이터
   retrieveData() {
-    getLeads({ searchTerm: this.searchTerm, currentPage: this.currentPage })
+    getLeads({ 
+      searchTerm: this.searchTerm, 
+      field: this.field, 
+      currentPage: this.currentPage, 
+      selectRating : this.selectRating,
+      selectStatus : this.selectStatus 
+    })
     .then(result => {
       if (result) {
         this.data = result.map(record => ({
@@ -92,6 +120,85 @@ export default class LeadDatatable extends NavigationMixin(LightningElement) {
       this.data = undefined;
     });
   }
+
+  // Display할 페이지 번호
+  calculatePageNumbers() {
+    this.pageNumbers = [];
+    const pageCount = Math.ceil(this.totalLeadCount / this.pageSize);
+    this.startPage = this.currentPage -(this.currentPage - 1) % 5;
+    this.endPage = this.startPage + 4;
+
+    if(this.endPage > pageCount) this.endPage = pageCount;
+    for (let i = this.startPage; i <= this.endPage; i++) {
+      this.pageNumbers.push(i);
+    }
+
+    this.isPreviousButtonDisabled = this.currentPage === 1;
+    this.isNextButtonDisabled = this.currentPage === pageCount;
+    this.next5PageDisabled = pageCount <= 5;
+    this.isFirstButtonDisabled = this.currentPage === 1;
+    this.isEndButtonDisabled = this.currentPage === pageCount;
+  }
+  
+  // 해당 페이지 이동
+  navigateToPage(event) {
+    const pageNumber = event.target.dataset.page;
+    if (pageNumber) {
+      this.currentPage = parseInt(pageNumber, 10);
+      this.loadData();
+    }
+  }
+
+  // 이전 페이지
+  previousPage() {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.loadData();
+    }
+  }
+
+  // 다음 페이지
+  nextPage() {
+    if (this.currentPage < this.pageNumbers.length) {
+      this.currentPage++;
+      this.loadData();
+    }
+  }
+
+  // 첫 페이지
+  goFirstPage() {
+    this.currentPage = 1;
+    this.loadData();
+  }
+
+  // 5 페이지 이동
+  next5Page() {
+    const pageCount = Math.ceil(this.totalLeadCount / this.pageSize);
+    const nextPage = this.currentPage + 5;
+  
+    if (nextPage <= pageCount) {
+      this.currentPage = nextPage;
+    } else {
+      this.currentPage = pageCount;
+      this.currentPage = prevPage -(this.currentPage - 1) % 5;
+    }
+
+    this.loadData();
+  }
+
+  // 끝 페이지
+  goEndPage() {
+    this.currentPage = Math.ceil(this.totalLeadCount / this.pageSize);
+    this.loadData();
+  }
+
+
+  // 검색필드 콤보박스 옵션
+  fieldOptions = [
+    { label : '이름', value : 'LastName'},
+    { label : '회사', value : 'Company'},
+    { label : '직책', value : 'Title'}
+  ];
 
    // 등급 콤보박스 옵션
   ratingOptions = [
@@ -116,8 +223,20 @@ export default class LeadDatatable extends NavigationMixin(LightningElement) {
     { label: 'Purchased List', value: 'Purchased List' },
     { label: 'Other', value: 'Other' }
   ];
+  
+  handleFieldChange(event) {this.field = event.detail.value;}
+  handleSelectRatingChange(event) { 
+    this.selectRating = event.detail.value;
+    this.currentPage = 1; // 필터를 하고 1페이지로 초기화를 한다.
+    this.loadData();
+  }
+  handleSelectStatusChange(event) { 
+    this.selectStatus = event.detail.value;
+    this.currentPage = 1; // 필터를 하고 1페이지로 초기화를 한다.
+    this.loadData();
+  }
 
-   // 데이터 테이블에서 항목을 선택할 때 호출되는 이벤트 핸들러
+  // 데이터 테이블에서 항목을 선택할 때 호출되는 이벤트 핸들러
   handleRowSelection(event) {
     const selectedIds = event.detail.selectedRows.map(row =>{
       // id가 하이퍼링크로 바껴서 다시 추출함
@@ -138,9 +257,11 @@ export default class LeadDatatable extends NavigationMixin(LightningElement) {
   handleDeleteClick() {
     if (!this.isDeleteButtonDisabled) {
       console.log("selectedRowIds : " + this.selectedRowIds);
-      deleteSelectedLeads({ selectedIds: this.selectedRowIds })
+      // List<Id>로 변환하여 Apex 메서드에 전달
+      const selectedIds = this.selectedRowIds.map(id => id);
+      deleteSelectedLeads({ selectedIds: selectedIds })
       .then(result => {
-        location.reload();
+        this.loadData();
       })
       .catch(error => {
         console.error('삭제 중 에러:', error);
@@ -218,48 +339,55 @@ export default class LeadDatatable extends NavigationMixin(LightningElement) {
     }
   }
 
+  resetFilter(){
+    this.selectRating = '';
+    this.selectStatus = '';
+    this.loadData();
+  }
+
    // 리드 생성 로직
   createLead() {
-    this.inputCheck()
-    .then(result =>{
-      if(result){
-        const fields = {
-          FirstName: this.firstName,
-          LastName: this.lastName,
-          Company: this.company,
-          Title: this.title,
-          Email: this.email,
-          Rating: this.rating,
-          Status: this.status,
-          LeadSource: this.leadSource
-        };
+    console.log("createLead들어옴")
     
-        console.log("dddd"+fields.FirstName);
-    
-        // Apex 메서드 호출
-        cLead({ fields: fields })
-        .then(result => {
-          if (result) {
-            // 리드가 생성되었으므로 레코드 ID를 받아옴
-            const leadId = result;
-            this.closeModal(); // 리드 생성하고 모달창 닫기
-            this.loadData();
-    
-            // 레코드 상세 페이지로 이동
-            this[NavigationMixin.Navigate]({
-                type: 'standard__recordPage',
-                attributes: {
-                    recordId: leadId,
-                    actionName: 'view'
-                }
-            });
-          }
-        })
-        .catch(error => {
-          console.error('리드 생성 중 오류 발생: ' + JSON.stringify(error));
-        });
-      }
-    })
+    if(this.inputCheck()){
+      const fields = {
+        FirstName: this.firstName,
+        LastName: this.lastName,
+        Company: this.company,
+        Title: this.title,
+        Email: this.email,
+        Rating: this.rating,
+        Status: this.status,
+        LeadSource: this.leadSource
+      };
+  
+      console.log("dddd"+fields.FirstName);
+  
+      // Apex 메서드 호출
+      cLead({ fields: fields })
+      .then(result => {
+        if (result) {
+          // 리드가 생성되었으므로 레코드 ID를 받아옴
+          const leadId = result;
+          this.closeModal(); // 리드 생성하고 모달창 닫기
+          this.loadData();
+  
+          // 레코드 상세 페이지로 이동
+          this[NavigationMixin.Navigate]({
+              type: 'standard__recordPage',
+              attributes: {
+                  recordId: leadId,
+                  actionName: 'view'
+              }
+          });
+        }
+      })
+      .catch(error => {
+        console.error('리드 생성 중 오류 발생: ' + JSON.stringify(error));
+      });
+    }else{
+      console.log("[test용] 유효성 검사 실패");
+    }
   }
 
   // 필수 입력란 유효성 체크
@@ -285,28 +413,26 @@ export default class LeadDatatable extends NavigationMixin(LightningElement) {
   // 정렬 함수
   sortData(fieldname, direction) {
     let parseData = JSON.parse(JSON.stringify(this.data));
-    let keyValue = (a) => {
-      return a[fieldname];
-    };
     let isReverse = direction === 'asc' ? 1 : -1;
 
     parseData.sort((x, y) => {
-      x = keyValue(x) ? keyValue(x) : '';
-      y = keyValue(y) ? keyValue(y) : '';
-      return isReverse * ((x > y) - (y > x));
+      let valueX = x[fieldname];
+      let valueY = y[fieldname];
+
+      if (fieldname === 'Id') {
+        // '이름' 컬럼을 'LastName' 값으로 정렬
+        valueX = x['LastName'];
+        valueY = y['LastName'];
+      }
+
+      valueX = valueX ? valueX : '';
+      valueY = valueY ? valueY : '';
+
+      return isReverse * ((valueX > valueY) - (valueY > valueX));
     });
+
     this.data = parseData;
   }
-
-  // 이전 페이지 이동
-  previousPage() {
-    if (this.currentPage > 1) {
-      this.currentPage--;
-    }
-    this.loadData();
-  }
-  // 다음 페이지 이동
-  nextPage() { this.currentPage++; this.loadData();}
 
   // 리드생성 모달창 오픈
   openLeadCreationModal() {this.showModal = true;}
@@ -328,13 +454,4 @@ export default class LeadDatatable extends NavigationMixin(LightningElement) {
     this.leadSourceError = '';
   }
 
-  get isPreviousButtonDisabled() {
-    return this.currentPage === 1;
-  }
-
-  get isNextButtonDisabled() {
-    const pageSize = 10;
-    const totalPages = Math.ceil(this.totalLeadCount / pageSize);
-    return this.currentPage === totalPages;
-  }
 }

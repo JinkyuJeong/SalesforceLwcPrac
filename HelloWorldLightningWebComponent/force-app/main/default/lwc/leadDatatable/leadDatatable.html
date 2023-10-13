@@ -5,7 +5,43 @@
         리드 만들어유~
       </button>
       &nbsp;&nbsp;&nbsp;
-      <lightning-input type="search" label="검색" value={searchTerm} onchange={handleSearch} style="display: inline-block; width:40%;"></lightning-input>
+
+      <div style="display: flex;">
+        <lightning-combobox
+            label="검색 필드"
+            value={field}
+            options={fieldOptions}
+            onchange={handleFieldChange}>
+        </lightning-combobox>
+        &nbsp;&nbsp;
+        <lightning-input type="search" label="검색어" value={searchTerm} onchange={handleSearch} style="display: inline-block; width:40%;"></lightning-input>
+      </div>
+
+      <br><br>
+
+      <div style="padding : 10px; border : 1px solid rgba(0,0,0,0.3); box-shadow: 5px 5px 5px rgba(0,0,0,0.5); margin-right : 15px;">
+        <span style="font-weight: bold; color:darkgreen;">등급과 리드 상태별로 데이터를 확인해유~ (밑에 콤보박스로 확인하세유~)</span>
+        <br>
+        <div style="display: flex; align-items: center;">
+          <lightning-combobox
+              label="등급"
+              value={selectRating}
+              options={ratingOptions}
+              onchange={handleSelectRatingChange}>
+          </lightning-combobox>
+          &nbsp;&nbsp;
+          <lightning-combobox
+              label="리드 상태"
+              value={selectStatus}
+              options={statusOptions}
+              onchange={handleSelectStatusChange}>
+          </lightning-combobox>
+          &nbsp;&nbsp;&nbsp;&nbsp;
+          <lightning-button label="필터 초기화 해유" variant="destructive" onclick={resetFilter}></lightning-button>
+        </div>
+
+        <br>
+      </div>
     </div>
 
       <!-- 모달 다이얼로그 구조 -->
@@ -66,7 +102,7 @@
     </template>
 
     <br>
-     <span style="font-size : 20px; color:purple; margin-left: 10px;">데이터의 총 개수 : {totalLeadCount}개</span>
+     <span style="font-size : 20px; color:purple; margin-left: 10px;">검색된 데이터의 총 개수 : {totalLeadCount}개</span>
     <br>
 
       <lightning-button
@@ -92,15 +128,50 @@
 
     <div style="text-align: center; background-color: black;">
       <lightning-button
+        label="첫 페이지"
+        onclick={goFirstPage}
+        variant="brand"
+        disabled={isFirstButtonDisabled}>
+      </lightning-button>
+      &nbsp;
+
+      <lightning-button
         label="이전"
         onclick={previousPage}
         disabled={isPreviousButtonDisabled}>
       </lightning-button>
       &nbsp;
+
+      <template for:each={pageNumbers} for:item="page">
+        <lightning-button
+          key={page}
+          label={page}
+          onclick={navigateToPage}
+          data-page={page}
+        ></lightning-button>
+        &nbsp;
+      </template>
+
       <lightning-button
         label="다음"
         onclick={nextPage}
         disabled={isNextButtonDisabled}>
+      </lightning-button>
+
+      &nbsp;
+      <lightning-button
+        label="5페이지 이동해유~"
+        onclick={next5Page}
+        disabled={next5PageDisabled}
+        variant="success">
+      </lightning-button>
+
+      &nbsp;
+      <lightning-button
+        label="끝 페이지"
+        onclick={goEndPage}
+        variant="brand"
+        disabled={isEndButtonDisabled}>
       </lightning-button>
     </div>
   </lightning-card>

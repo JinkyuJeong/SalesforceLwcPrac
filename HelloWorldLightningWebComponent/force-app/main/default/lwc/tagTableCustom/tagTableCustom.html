@@ -1,0 +1,54 @@
+<template>
+
+  <div>
+
+  </div>
+
+  <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_col-bordered" aria-label="Example table of Opportunities with no row hovers">
+    <thead>
+      <tr class="slds-line-height_reset">
+        <template for:each={columns} for:item="column">
+          <th key={column.label} class="slds-text-title_caps" scope="col">
+            <div class="slds-truncate" title={column.label}>{column.label}</div>
+          </th>
+        </template>
+      </tr>
+    </thead>
+    <tbody>
+      <template for:each={data} for:item="record">
+        <tr key={record.Id} class="slds-hint-parent">
+          <td data-label="계정 이름" scope="row">
+            <div class="slds-truncate" title={record.Name}>
+              <template if:true={record.Id}>
+                <a href={record.Id} target="_self">{record.Name}</a>
+              </template>
+              <template if:false={record.Id}>
+                {record.Name}
+              </template>
+            </div>
+          </td>
+          <td data-label="유형">
+            <div class="slds-truncate" title={record.Type}>
+              {record.Type}
+            </div>
+          </td>
+          <td data-label="전화번호">
+            <div class="slds-truncate" title={record.Phone}>
+              {record.Phone}
+            </div>
+          </td>
+          <td data-label="웹사이트">
+            <div class="slds-truncate" title={record.Website}>
+              {record.Website}
+            </div>
+          </td>
+          <td data-label="계정 소유자">
+            <div class="slds-truncate" title={record.OwnerId}>
+              {record.OwnerId}
+            </div>
+          </td>
+        </tr>
+      </template>
+    </tbody>
+  </table>
+</template>

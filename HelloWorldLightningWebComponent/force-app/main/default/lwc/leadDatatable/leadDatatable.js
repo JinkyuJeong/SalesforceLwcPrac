@@ -30,41 +30,44 @@ const columns = [
 export default class LeadDatatable extends NavigationMixin(LightningElement) {
   @track data;
   @track columns = columns;
-  @track sortBy;
-  @track sortDirection; // 오름차 / 내림차
-  @track searchTerm = ''; // 검색어
-  @track currentPage = 1;
-  @track pageNumbers = [];  // 페이지 번호 넣는 배열
-  @track pageSize = 10; // 페이지당 데이터 개수
-  @track isPreviousButtonDisabled = true;
-  @track isNextButtonDisabled = false;
-  @track next5PageDisabled = false;
-  @track isFirstButtonDisabled = false;
-  @track isEndButtonDisabled = false;
-  @track totalLeadCount;  // 데이터 개수
-  @track showModal = false; // 모달
-  @track firstName;
-  @track lastName;
-  @track company;
-  @track title;
-  @track email;
-  @track rating;
-  @track status = 'Open - Not Contacted';
-  @track leadSource
-  @track lastNameError = '';
-  @track emailError = '';
-  @track RatingError = '';
-  @track leadSourceError = '';
-  @track isEmailDup;
-  @track availableEmail = '';
-  @track selectedRowIds;
-  @track isDeleteButtonDisabled = true; // 삭제 버튼 비활성화 상태
-  @track buttonLabel = '삭제 할거면 체크해유~'; // 삭제 버튼 레이블
-  @track field = 'LastName';
-  @track selectRating ='';  // 필터링된 등급 value
-  @track selectStatus = ''; // 필터링된 상태 value
-  @track startPage;
-  @track endPage;
+  sortBy;
+  sortDirection; // 오름차 / 내림차
+  searchTerm = ''; // 검색어
+  currentPage = 1;
+  pageNumbers = [];  // 페이지 번호 넣는 배열
+  pageSize = 10; // 페이지당 데이터 개수
+  isPreviousButtonDisabled = true;
+  isNextButtonDisabled = false;
+  next5PageDisabled = false;
+  isFirstButtonDisabled = false;
+  isEndButtonDisabled = false;
+  totalLeadCount;  // 데이터 개수
+  showModal = false; // 모달
+  firstName;
+  lastName;
+  company;
+  title;
+  email;
+  rating;
+  status = 'Open - Not Contacted';
+  leadSource
+  lastNameError = '';
+  emailError = '';
+  RatingError = '';
+  leadSourceError = '';
+  isEmailDup;
+  availableEmail = '';
+  selectedRowIds;
+  isDeleteButtonDisabled = true; // 삭제 버튼 비활성화 상태
+  buttonLabel = '삭제 할거면 체크해유~'; // 삭제 버튼 레이블
+  field;
+  selectRating ='';  // 필터링된 등급 value
+  selectStatus = ''; // 필터링된 상태 value
+  startPage;
+  endPage;
+  nameSearchTerm =''; // 이름 검색
+  companySearchTerm=''; // 회사 검색
+  titleSearchTerm ='';  // 직책 검색
 
   // DOM연결
   connectedCallback() {
@@ -82,7 +85,10 @@ export default class LeadDatatable extends NavigationMixin(LightningElement) {
     getLeadsCount({ searchTerm: this.searchTerm,
                     field: this.field, 
                     selectRating : this.selectRating,
-                    selectStatus : this.selectStatus 
+                    selectStatus : this.selectStatus,
+                    nameSearchTerm : this.nameSearchTerm,
+                    companySearchTerm : this.companySearchTerm,
+                    titleSearchTerm : this.titleSearchTerm 
       })
       .then(result => {
         this.totalLeadCount = result;
@@ -101,7 +107,10 @@ export default class LeadDatatable extends NavigationMixin(LightningElement) {
       field: this.field, 
       currentPage: this.currentPage, 
       selectRating : this.selectRating,
-      selectStatus : this.selectStatus 
+      selectStatus : this.selectStatus,
+      nameSearchTerm : this.nameSearchTerm,
+      companySearchTerm : this.companySearchTerm,
+      titleSearchTerm : this.titleSearchTerm 
     })
     .then(result => {
       if (result) {
@@ -261,7 +270,7 @@ export default class LeadDatatable extends NavigationMixin(LightningElement) {
       const selectedIds = this.selectedRowIds.map(id => id);
       deleteSelectedLeads({ selectedIds: selectedIds })
       .then(result => {
-        this.loadData();
+        window.reload();
       })
       .catch(error => {
         console.error('삭제 중 에러:', error);
@@ -339,11 +348,33 @@ export default class LeadDatatable extends NavigationMixin(LightningElement) {
     }
   }
 
+  handleNameSearch(event){
+    this.nameSearchTerm = event.detail.value;
+    this.currentPage = 1; 
+    this.loadData();
+  }
+  handleCompanySearch(event){
+    this.companySearchTerm = event.detail.value;
+    this.currentPage = 1;
+    this.loadData();
+  }
+  handleTitleSearch(event){
+    this.titleSearchTerm = event.detail.value;
+    this.currentPage = 1;
+    this.loadData();
+  }
+
   resetFilter(){
     this.selectRating = '';
     this.selectStatus = '';
+    this.field = '';
+    this.searchTerm ='';
+    this.nameSearchTerm ='';
+    this.companySearchTerm ='';
+    this.titleSearchTerm='';
     this.loadData();
   }
+
 
    // 리드 생성 로직
   createLead() {

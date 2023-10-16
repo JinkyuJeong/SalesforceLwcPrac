@@ -1,20 +1,32 @@
 public with sharing class LeadDatatable {
     @AuraEnabled(Cacheable=true)
-    public static List<Lead> getLeads(String searchTerm, String field, Integer currentPage, String selectRating, String selectStatus) {
-        String query = '%' + searchTerm +'%';
-        String status = '%' + selectStatus +'%';
+    public static List<Lead> getLeads(String searchTerm, String field, Integer currentPage, String selectRating, String selectStatus,
+                                        String nameSearchTerm, String companySearchTerm, String titleSearchTerm) {
         Integer offset = (currentPage - 1) * 10;
-    
-        String rating = '';
-        String ratingQuery = '';
+        String name = '%' + nameSearchTerm + '%';
+        String company = '%' + companySearchTerm + '%';
+        String title = '%' + titleSearchTerm + '%';
+
+        String condition = ' WHERE LastName Like :name and Company Like :company and Title Like :title ';
+        
+        if (!String.isBlank(field) && !String.isBlank(searchTerm)) {
+            String query = '%' + searchTerm +'%';
+            condition += ' and ' + field + ' LIKE :query';
+        }
+
         if (!String.isBlank(selectRating)) {
-            rating = '%'+selectRating+'%';
-            ratingQuery = ' and Rating LIKE :rating';
+            String rating = '%'+selectRating+'%';
+            condition += ' and Rating LIKE :rating';
+        }
+
+        if (!String.isBlank(selectStatus)) {
+            String status = '%'+selectStatus+'%';
+            condition += ' and Status LIKE :status';
         }
     
         String soql = 'SELECT Id, LastName, FirstName, Company, Title, Email, Rating, Status '
                     + ' FROM Lead ' 
-                    + ' WHERE ' + field + ' LIKE :query' + ratingQuery + ' and Status Like :status'
+                    + condition
                     + ' ORDER BY CreatedDate DESC LIMIT 10 OFFSET :offset';
     
         List<Lead> leadList = Database.query(soql);
@@ -23,20 +35,32 @@ public with sharing class LeadDatatable {
     }
 
     @AuraEnabled(Cacheable=true)
-    public static Integer getLeadsCount(String searchTerm, String field, String selectRating, String selectStatus){
-        String query = '%' + searchTerm +'%';
-        String status = '%' + selectStatus +'%';
+    public static Integer getLeadsCount(String searchTerm, String field, String selectRating, String selectStatus,
+    String nameSearchTerm, String companySearchTerm, String titleSearchTerm){
+        String name = '%' + nameSearchTerm + '%';
+        String company = '%' + companySearchTerm + '%';
+        String title = '%' + titleSearchTerm + '%';
 
-        String rating = '';
-        String ratingQuery = '';
+        String condition = ' WHERE LastName Like :name and Company Like :company and Title Like :title ';
+        
+        if (!String.isBlank(field) && !String.isBlank(searchTerm)) {
+            String query = '%' + searchTerm +'%';
+            condition += ' and ' + field + ' LIKE :query';
+        }
+
         if (!String.isBlank(selectRating)) {
-            rating = '%'+selectRating+'%';
-            ratingQuery = ' and Rating LIKE :rating';
+            String rating = '%'+selectRating+'%';
+            condition += ' and Rating LIKE :rating';
+        }
+
+        if (!String.isBlank(selectStatus)) {
+            String status = '%'+selectStatus+'%';
+            condition += ' and Status LIKE :status';
         }
 
         String soql = 'SELECT Id, LastName, FirstName, Company, Title, Email, Rating, Status '
                     + ' FROM Lead ' 
-                    + ' WHERE ' + field + ' LIKE :query' + ratingQuery + ' and Status Like :status';
+                    + condition;
                     
         List<SObject> result = Database.query(soql);
         Integer cnt = result.size();

@@ -17,6 +17,12 @@
         <lightning-input type="search" label="검색어" value={searchTerm} onchange={handleSearch} style="display: inline-block; width:40%;"></lightning-input>
       </div>
 
+      <div style="display: flex;">
+        <lightning-input type="search" label="이름 검색" value={nameSearchTerm} onchange={handleNameSearch} style="display: inline-block; width:20%;"></lightning-input> &nbsp;&nbsp;
+        <lightning-input type="search" label="회사 검색" value={companySearchTerm} onchange={handleCompanySearch} style="display: inline-block; width:20%;"></lightning-input>&nbsp;&nbsp;
+        <lightning-input type="search" label="직책 검색" value={titleSearchTerm} onchange={handleTitleSearch} style="display: inline-block; width:20%;"></lightning-input>
+      </div>
+
       <br><br>
 
       <div style="padding : 10px; border : 1px solid rgba(0,0,0,0.3); box-shadow: 5px 5px 5px rgba(0,0,0,0.5); margin-right : 15px;">

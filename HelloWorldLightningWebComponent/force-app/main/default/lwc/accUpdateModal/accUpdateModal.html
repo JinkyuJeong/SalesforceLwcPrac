@@ -1,0 +1,59 @@
+<template>
+    <lightning-modal-header label="계정 편집"></lightning-modal-header>
+
+    <lightning-modal-body>
+
+        <!-- editform -->
+
+        <!-- density 설정.. 유저 설정에 따른 auto 레이아웃이 아닌 지정된 레이아웃으로 보여줄수있게함 -->
+        <lightning-record-edit-form
+            object-api-name="Account"
+            onsuccess={handleSuccess}
+            onerror={handleError}
+            record-id={accId}
+            density="comfy"
+            data-id="modalForm">
+            <!-- 레이아웃 사이즈 지정 -->
+
+            <lightning-layout>
+              <lightning-layout-item size="12">
+                <label for="fieldid">계정 이름</label>
+                <lightning-input-field value={accName} field-name="Name" onchange={handleAccNameChange} variant="label-hidden" required></lightning-input-field>
+              </lightning-layout-item>
+            </lightning-layout>
+
+            <lightning-layout>
+              <lightning-layout-item size="12">
+                <lightning-combobox
+                  placeholder="Select"
+                  label="타입"
+                  field-name="Type"
+                  value={accType}
+                  options={accTypeOptions}
+                  onchange={handleAccTypeChange} 
+                  required></lightning-combobox>
+              </lightning-layout-item>
+            </lightning-layout>
+
+            <lightning-layout>
+                <lightning-layout-item size="12">
+                    <lightning-input-field value={accPhone} field-name="Phone" type="Phone" onchange={handleAccPhoneChange}  required></lightning-input-field>
+                </lightning-layout-item>
+            </lightning-layout>
+
+            <lightning-layout>
+                <lightning-layout-item size="12">
+                  <lightning-input-field value={accWebsite} field-name="Website" type="url" onchange={handleAccWebsiteChange}  required></lightning-input-field>
+                </lightning-layout-item>
+            </lightning-layout>
+
+        </lightning-record-edit-form>
+    </lightning-modal-body>
+
+    <!-- 모달 footer -->
+    <lightning-modal-footer>
+      <lightning-button label="닫기" onclick={handleClosedModal}></lightning-button> &nbsp;
+      <lightning-button variant="brand" type="submit" onclick={handleUpdate} label="완료" ></lightning-button>
+    </lightning-modal-footer>
+
+</template>

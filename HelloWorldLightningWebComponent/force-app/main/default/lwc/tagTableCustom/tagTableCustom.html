@@ -1,54 +1,77 @@
 <template>
+  <lightning-card title="&lt;table&gt; 태그 사용한 데이터 테이블 과제" icon-name="standard:account">
 
-  <div>
+  <div style="height: 400px;overflow: auto;" id="container" onscroll={handleScroll}>
+    <template if:true={data}>
+      <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_col-bordered">
+        <thead>
+          <tr class="slds-line-height_reset">
+            <template for:each={columns} for:item="column">
+              <th key={column.label} class="slds-text-title_caps" scope="col">
+                <div class="slds-truncate" title={column.label}>{column.label}</div>
+              </th>
+            </template>
+          </tr>
+        </thead>
+        <tbody>
+          <template for:each={data} for:item="record">
+            <tr key={record.Id} class="slds-hint-parent">
+              <td data-label="계정 이름" scope="row">
+                <div class="slds-truncate" title={record.Name}>
+                  <template if:true={record.Id}>
+                    <a href={record.Id} target="_self">{record.Name}</a>
+                  </template>
+                  <template if:false={record.Id}>
+                    {record.Name}
+                  </template>
+                </div>
+              </td>
+              <td data-label="유형">
+                <div class="slds-truncate" title={record.Type}>
+                  {record.Type}
+                </div>
+              </td>
+              <td data-label="전화번호">
+                <div class="slds-truncate" title={record.Phone}>
+                  {record.Phone}
+                </div>
+              </td>
+              <td data-label="웹사이트">
+                <div class="slds-truncate" title={record.Website}>
+                  {record.Website}
+                </div>
+              </td>
+              <td data-label="계정 소유자">
+                <div class="slds-truncate" title={record.Owner.Name}>
+                  {record.Owner.Name}
 
-  </div>
-
-  <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_col-bordered" aria-label="Example table of Opportunities with no row hovers">
-    <thead>
-      <tr class="slds-line-height_reset">
-        <template for:each={columns} for:item="column">
-          <th key={column.label} class="slds-text-title_caps" scope="col">
-            <div class="slds-truncate" title={column.label}>{column.label}</div>
-          </th>
-        </template>
-      </tr>
-    </thead>
-    <tbody>
-      <template for:each={data} for:item="record">
-        <tr key={record.Id} class="slds-hint-parent">
-          <td data-label="계정 이름" scope="row">
-            <div class="slds-truncate" title={record.Name}>
-              <template if:true={record.Id}>
-                <a href={record.Id} target="_self">{record.Name}</a>
-              </template>
-              <template if:false={record.Id}>
-                {record.Name}
-              </template>
-            </div>
-          </td>
-          <td data-label="유형">
-            <div class="slds-truncate" title={record.Type}>
-              {record.Type}
-            </div>
-          </td>
-          <td data-label="전화번호">
-            <div class="slds-truncate" title={record.Phone}>
-              {record.Phone}
-            </div>
-          </td>
-          <td data-label="웹사이트">
-            <div class="slds-truncate" title={record.Website}>
-              {record.Website}
-            </div>
-          </td>
-          <td data-label="계정 소유자">
-            <div class="slds-truncate" title={record.OwnerId}>
-              {record.OwnerId}
-            </div>
-          </td>
-        </tr>
+                  <lightning-button
+                    label='편집'
+                    data-recordid={record.Id}
+                    data-name={record.Name}
+                    data-type={record.Type}
+                    data-phone={record.Phone}
+                    data-website={record.Website}
+                    onclick={handleOpenClick}
+                    variant="brand"
+                    style="margin-left: 5px;">
+                  </lightning-button>
+                </div>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+      <template if:true={isLoading}>
+        <div class="demo-only demo-only_viewport" style="height:6rem;position:relative">
+          <div role="status" class="slds-spinner slds-spinner_medium">
+            <span class="slds-assistive-text">Loading</span>
+            <div class="slds-spinner__dot-a"></div>
+            <div class="slds-spinner__dot-b"></div>
+          </div>
+        </div>
       </template>
-    </tbody>
-  </table>
+    </template>
+  </div>
+  </lightning-card>
 </template>

@@ -75,7 +75,8 @@ export default class AccUpdateModal extends LightningModal {
     updateRecord(recordInput).then((record) => {
       console.log(record);
     });
-
+    
     this.handleClosedModal();
+    window.location.reload();
   }
 }

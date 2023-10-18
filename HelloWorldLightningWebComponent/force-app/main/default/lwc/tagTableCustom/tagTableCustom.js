@@ -1,7 +1,10 @@
-import { LightningElement, track } from 'lwc';
+import { LightningElement, track, } from 'lwc';
 import getAccounts  from '@salesforce/apex/TagTableCustom.getAccounts';
 import getAccountsCount from '@salesforce/apex/TagTableCustom.getAccountsCount';
 import AccUpdateModal from 'c/accUpdateModal';
+import AccEditModal from 'c/accEditModal';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import getAcc from '@salesforce/apex/TagTableCustom.getAcc'
 
 const columns = [
   {
@@ -28,6 +31,75 @@ export default class TagTableCustom extends LightningElement {
   totalLeadCount = 0; // 전체 데이터의 개수
   currentPage = 1; // 현재 페이지
   pageSize = 10; // 한 페이지당 표시할 데이터 개수
+  showModal; // 모달 오픈여부
+  accId;
+  accType;
+
+  // 계정 타입 콤보박스 옵션
+  accTypeOptions = [
+    { label: 'Prospect', value: 'Prospect' },
+    { label: 'Customer - Direct', value: 'Customer - Direct' },
+    { label: 'Customer - Channel', value: 'Customer - Channel' },
+    { label: 'Channel Partner / Reseller', value: 'Channel Partner / Reseller' },
+    { label: 'Installation Partner', value: 'Installation Partner' },
+    { label: 'Technology Partner', value: 'Technology Partner' },
+    { label: 'Other', value: 'Other' }
+  ];
+
+  handleAccTypeChange(e){this.accType = e.detail.value;}
+  handleClosedModal() {this.showModal = false; }
+
+  handleOpenModal(event) {
+    const recordIdParts = event.target.dataset.recordid.split('/');
+    const extractedId = recordIdParts[recordIdParts.length - 1];
+    
+    this.accId = extractedId;
+    console.log(this.accId);
+
+    this.accType = event.target.dataset.type;
+    this.showModal = true;
+  }
+
+  handleUpdate(){
+    const fields = {};
+    let fieldCmps = this.template.querySelectorAll('lightning-input-field');
+    let fieldCombo = this.template.querySelector('lightning-combobox');
+    for(let fieldCmp of fieldCmps) {
+        fields[fieldCmp.fieldName] = fieldCmp.value;
+    }
+    fields[fieldCombo.fieldName] = fieldCombo.value;
+
+    this.template.querySelector('lightning-record-edit-form').submit(fields);
+  }
+
+  handleSuccess(){
+    this.handleClosedModal(); // 모달을 닫음
+    this.showToast('변경 성공!', '레코드 변경에 성공 하였습니다.', 'success'); // 성공 메시지 표시
+    getAcc({ id : this.accId })
+      .then( result => {
+        if (result && result.Id) {
+          const newData = { ...result, Id: '/' + result.Id }; // 기존 레코드와 동일한 형식으로 변환
+          // 기존 데이터 배열에서 변경해야 하는 레코드 식별 및 업데이트
+          const updatedData = this.data.map(record => {
+              if (record.Id === newData.Id) {
+                  return newData; // 변경된 레코드로 교체
+              }
+              return record;
+          });
+          this.data = updatedData; // 데이터 배열 업데이트
+        }
+      })
+  }
+
+  // 메시지 표시
+  showToast(title, message, variant) {
+    const event = new ShowToastEvent({
+      title: title,
+      message: message,
+      variant: variant,
+    });
+    this.dispatchEvent(event);
+  }
 
   handleOpenClick(event) {
     // id가 하이퍼링크라 '/'를 없앰
@@ -45,6 +117,29 @@ export default class TagTableCustom extends LightningElement {
 
     // 모달 창 열기 및 레코드 정보 전달
     AccUpdateModal.open({
+        size: 'large',
+        recordData: recordData // 레코드 정보 전달
+    }).then((result) => {
+        console.log(result);
+    });
+  }
+
+  handleOpenClick2(event) {
+    // id가 하이퍼링크라 '/'를 없앰
+    const recordIdParts = event.target.dataset.recordid.split('/');
+    const extractedId = recordIdParts[recordIdParts.length - 1];
+
+    // 레코드 정보를 생성
+    const recordData = {
+        Id: extractedId,
+        Name: event.target.dataset.name,
+        Type: event.target.dataset.type,
+        Phone: event.target.dataset.phone,
+        Website: event.target.dataset.website
+    };
+
+    // 모달 창 열기 및 레코드 정보 전달
+    AccEditModal.open({
         size: 'large',
         recordData: recordData // 레코드 정보 전달
     }).then((result) => {

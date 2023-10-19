@@ -270,7 +270,7 @@ export default class LeadDatatable extends NavigationMixin(LightningElement) {
       const selectedIds = this.selectedRowIds.map(id => id);
       deleteSelectedLeads({ selectedIds: selectedIds })
       .then(result => {
-        window.reload();
+        window.location.reload();
       })
       .catch(error => {
         console.error('삭제 중 에러:', error);

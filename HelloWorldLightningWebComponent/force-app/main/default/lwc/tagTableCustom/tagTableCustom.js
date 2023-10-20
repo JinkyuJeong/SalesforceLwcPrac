@@ -8,6 +8,7 @@ import getAcc from '@salesforce/apex/TagTableCustom.getAcc'
 import checkAccNameDuplication from '@salesforce/apex/TagTableCustom.checkAccNameDuplication';
 import createdNewRecord from '@salesforce/apex/TagTableCustom.createdNewRecord';
 import delAcc from '@salesforce/apex/TagTableCustom.delAcc';
+import getContacts from '@salesforce/apex/TagTableCustom.getContacts';
 
 const columns = [
   {
@@ -29,6 +30,8 @@ const columns = [
 
 export default class TagTableCustom extends LightningElement {
   @track data;
+  @track contactData;
+  error;
   columns = columns;
   acc;
   isLoading = false;
@@ -44,12 +47,15 @@ export default class TagTableCustom extends LightningElement {
   accNameDupMessage; // 중복(사용 불가)
   field; // 검색 필드
   searchTerm = ''; // 검색어
+  openContact
 
   // 검색필드 콤보박스 옵션
   fieldOptions = [
     { label : '계정 이름', value : 'Name'},
     { label : '전화번호', value : 'Phone'},
-    { label : '계정 소유자', value : 'Owner.Name'}
+    { label : '계정 소유자', value : 'Owner.Name'},
+    { label : '계정 이름 + 전화번호', value : 'Name+Phone'},
+    { label : '계정 이름 + 전화번호 + 계정 소유자', value : 'Name+Phone+OWner.Name'}
   ];
 
   // 계정 타입 콤보박스 옵션
@@ -63,14 +69,50 @@ export default class TagTableCustom extends LightningElement {
     { label: 'Other', value: 'Other' }
   ];
 
+  handleShowContacts(event) {
+    const recordIdParts = event.target.dataset.recordid.split('/');
+    const accountId = recordIdParts[recordIdParts.length - 1];
+    const accountIndex = this.data.findIndex(record => record.Id === '/'+accountId);
+
+    if (accountIndex !== -1) {
+      const account = this.data[accountIndex];
+
+      if (!account.showContacts) {
+          getContacts({ accountId: accountId })
+              .then(result => {
+                result = result.map(record => ({
+                  ...record,  // 기존 필드들을 유지
+                  Id: '/' + record.Id
+              }));
+                if (result && result.length > 0) {
+                  this.data[accountIndex].contacts = result;
+                  this.data[accountIndex].showContacts = true;
+                  this.error = undefined;
+                }else{
+                  this.data[accountIndex].contacts = undefined;
+                  this.data[accountIndex].showContacts = true;
+                }
+              })
+              .catch(error => {
+                this.data[accountIndex].contacts = undefined;
+                this.error = error;
+              });
+      } else {
+          // 이미 표시된 연락처가 있으면 숨깁니다.
+          this.data[accountIndex].contacts = [];
+          this.data[accountIndex].showContacts = false;
+      }
+    }
+  }
+
   handleFieldChange(event) {this.field = event.detail.value;}
 
   // 검색 이벤트 핸들 함수
   handleSearch(event) {
-    // 검색어 필드의 값을 업데이트하고 데이터를 새로고침
     this.searchTerm = event.target.value;
     if(this.field){
       this.currentPage = 1; // 검색을 하고 1페이지로 초기화를 한다.
+      this.data = undefined;
       this.loadData();
     }
   }
@@ -155,7 +197,7 @@ export default class TagTableCustom extends LightningElement {
   handleUpdate(){
     const fields = {};
     let fieldCmps = this.template.querySelectorAll('lightning-input-field');
-    let fieldCombo = this.template.querySelector('lightning-combobox');
+    let fieldCombo = this.template.querySelector('lightning-combobox[data-function="edit"]');
     for(let fieldCmp of fieldCmps) {
         fields[fieldCmp.fieldName] = fieldCmp.value;
     }
@@ -167,15 +209,19 @@ export default class TagTableCustom extends LightningElement {
   // 계정 레코드 생성 버튼 클릭 이벤트 함수
   handleCreate(){
     if(!this.isAccNameDup){
-      const fields = {};
-      let fieldCmps = this.template.querySelectorAll('lightning-input-field');
-      let fieldCombo = this.template.querySelector('lightning-combobox');
-      for(let fieldCmp of fieldCmps) {
-          fields[fieldCmp.fieldName] = fieldCmp.value;
+      if(this.type){
+        const fields = {};
+        let fieldCmps = this.template.querySelectorAll('lightning-input-field');
+        let fieldCombo = this.template.querySelector('lightning-combobox[data-function="create"]');
+        for(let fieldCmp of fieldCmps) {
+            fields[fieldCmp.fieldName] = fieldCmp.value;
+        }
+        fields[fieldCombo.fieldName] = fieldCombo.value;
+    
+        this.template.querySelector('lightning-record-edit-form').submit(fields);
+      }else{
+        this.showToast('생성 실패', '타입을 선택해주세요.', 'error');
       }
-      fields[fieldCombo.fieldName] = fieldCombo.value;
-  
-      this.template.querySelector('lightning-record-edit-form').submit(fields);
     }else{
       this.showToast('생성 실패', '계정 이름 중복 검사가 필요합니다.', 'error');
     }
@@ -331,7 +377,8 @@ export default class TagTableCustom extends LightningElement {
       if (result && result.length > 0) {
         this.data = [...(this.data || []), ...result.map(record => ({
           ...record,
-          Id: '/' + record.Id
+          Id: '/' + record.Id,
+          showContacts: false // 연락처 숨김 상태로 초기화
         }))];
         this.error = undefined;
       } else {

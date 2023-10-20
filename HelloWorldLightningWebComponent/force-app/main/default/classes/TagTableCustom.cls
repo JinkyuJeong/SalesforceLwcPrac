@@ -1,13 +1,22 @@
 public with sharing class TagTableCustom {
-    @AuraEnabled
+    @AuraEnabled(cacheable=true)
     public static List<Account> getAccounts(Integer pageNumber, Integer pageSize,String searchTerm, String field) {
         Integer offset = (pageNumber - 1) * pageSize;
         
-        String condition = '';
+        String condition = ' ';
         
-        if (!String.isBlank(field) && !String.isBlank(searchTerm)) {
+        if (!String.isBlank(field)) {
+            condition += ' WHERE ';
+            String[] fields = field.split('\\+');
             String query = '%' + searchTerm +'%';
-            condition += ' WHERE ' + field + ' LIKE :query';
+
+            for (Integer i = 0; i < fields.size(); i++) {
+                if (i > 0) {
+                    condition += ' OR ';
+                }
+                condition += fields[i] + ' LIKE :query';
+            }
+
         }
 
         String soql = 'SELECT Id, Name, Type, Phone, Website, OwnerId, Owner.Name FROM Account ' 
@@ -21,9 +30,17 @@ public with sharing class TagTableCustom {
     public static Integer getAccountsCount(String searchTerm, String field){
         String condition = '';
         
-        if (!String.isBlank(field) && !String.isBlank(searchTerm)) {
+        if (!String.isBlank(field)) {
+            condition += ' WHERE ';
+            String[] fields = field.split('\\+');
             String query = '%' + searchTerm +'%';
-            condition += ' WHERE ' + field + ' LIKE :query';
+
+            for (Integer i = 0; i < fields.size(); i++) {
+                if (i > 0) {
+                    condition += ' OR ';
+                }
+                condition += fields[i] + ' LIKE :query';
+            }
         }
 
         String soql = 'SELECT Id FROM Account' + condition;
@@ -61,5 +78,11 @@ public with sharing class TagTableCustom {
         } catch (Exception e) {
             throw new AuraHandledException(e.getMessage());
         }
+    }
+
+    @AuraEnabled
+    public static List<Contact> getContacts(Id accountId){
+        String soql = 'SELECT Id, Name, Phone, Email FROM Contact WHERE AccountId = :accountId';
+        return Database.query(soql);
     }
 }

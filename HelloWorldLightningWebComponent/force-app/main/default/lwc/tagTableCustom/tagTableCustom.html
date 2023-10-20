@@ -1,14 +1,15 @@
 <template>
   <lightning-card title="&lt;table&gt; 태그 사용한 데이터 테이블 과제" icon-name="standard:account">
 
-  <div style="height: 400px;overflow: auto;" id="container" onscroll={handleScroll}>
+  <div style="height: 600px;overflow: auto;" id="container" onscroll={handleScroll}>
     <br>
-    <div style="display: flex;">
+    <div style="display: flex; margin-left: 5px; ">
       <lightning-combobox
           label="검색 필드"
           value={field}
           options={fieldOptions}
-          onchange={handleFieldChange}>
+          onchange={handleFieldChange}
+          style="width : 200px;">
       </lightning-combobox>
       &nbsp;&nbsp;
       <lightning-input type="search" label="검색어" value={searchTerm} onchange={handleSearch} style="display: inline-block; width:40%;"></lightning-input>
@@ -46,7 +47,46 @@
                     {record.Name}
                   </template>
                 </div>
+
+                <lightning-button
+                    label='연락처'
+                    data-recordid={record.Id}
+                    onclick={handleShowContacts}>
+                </lightning-button>
+
+                <!-- 연락처 데이터를 여기에 추가 -->
+                <template if:true={record.showContacts}>
+                  <br>
+                  <div>
+                    <template if:true={record.contacts}>
+                      <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_col-bordered">
+                          <thead>
+                            <tr>
+                              <th>연락처 이름</th>
+                              <th>이메일</th>
+                              <th>전화번호</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <template for:each={record.contacts} for:item="contact">
+                              <tr key={contact.Id}>
+                                <td>
+                                  <lightning-formatted-url value={contact.Id} label={contact.Name} target="_self"></lightning-formatted-url>
+                                </td>
+                                <td>{contact.Email}</td>
+                                <td>{contact.Phone}</td>
+                              </tr>
+                            </template>
+                          </tbody>
+                      </table>
+                    </template>
+                    <template if:false={record.contacts}>
+                      <div class="slds-text-color_error">해당 계정에 대한 연락처가 없음</div>
+                    </template>
+                  </div>
+                </template>
               </td>
+
               <td data-label="유형">
                 <div class="slds-truncate" title={record.Type}>
                   {record.Type}
@@ -108,6 +148,7 @@
                 </div>
               </td>
             </tr>
+
           </template>
         </tbody>
       </table>
@@ -152,6 +193,7 @@
                     label="타입"
                     value={accType}
                     field-name="Type"
+                    data-function="edit"
                     onchange={handleAccTypeChange}
                     options={accTypeOptions}
                     required></lightning-combobox>
@@ -222,6 +264,7 @@
                     label="타입"
                     value={accType}
                     field-name="Type"
+                    data-function="create"
                     onchange={handleAccTypeChange}
                     options={accTypeOptions}
                     required
